@@ -9,7 +9,7 @@
 
 ## 📊 Executive Summary
 
-The WORDS_COLLIDE game was transformed from a **flat, monolithic C codebase** (ver1: 1 massive source file) into a **modular, layered architecture** (ver2: isolated modules organized into a layered folder hierarchy under `src/` and `include/`). The restructuring applies industry-standard software engineering principles (SOLID, Dependency Injection, Data Encapsulation) to a learning project, demonstrating professional code organization.
+The WORDS_COLLIDE game was transformed from a **flat, monolithic C codebase** (ver1: 1 massive source file) into a **modular, layered architecture** (ver2: isolated modules organized into a layered folder hierarchy under `src/` and `include/`). The restructuring applies industry-standard software engineering principles (SOLID, Dependency Injection, Data Encapsulation) to a project, demonstrating professional code organization.
 
 | Aspect | Before (ver1) | After (ver2) | Change |
 | :--- | :--- | :--- | :--- |
@@ -18,7 +18,7 @@ The WORDS_COLLIDE game was transformed from a **flat, monolithic C codebase** (v
 | **Header files** | 0 | 6 strictly scoped headers | Complete separation of concerns |
 | **State Management** | Global Variables (`window`, etc.) | Dependency Injection (`AppContext`) | Thread-safe, no side effects |
 | **Data Security** | Dictionary was globally mutable | `static` private variables in `logic.c` | True Data Encapsulation |
-| **Naming Convention** | Procedural (`init_game`) | Simulated Namespaces (`Core_InitGame`) | vastly improved readability |
+| **Naming Convention** | Procedural (`init_game`) | Simulated Namespaces (`Core_InitGame`) | Vastly improved readability |
 
 ---
 
@@ -62,11 +62,17 @@ WORDS_COLLIDE Source (src/)
  │
  └── main.c
       └── Game loop, frame timing, and module delegation
+```
 
-      🏛️ Architectural Improvements
-Layered Architecture Model
+---
+
+## 🏛️ Architectural Improvements
+
+### Layered Architecture Model
+
 The codebase now strictly adheres to a layered design. Higher layers (UI/IO) depend on the Engine Layer, and all layers depend on the Foundation Layer. Data flows downwards, preventing circular dependencies.
 
+```text
 +---------------------------------------------------+
 |                 UI & I/O Layer                    |
 |                                                   |
@@ -95,10 +101,15 @@ The codebase now strictly adheres to a layered design. Higher layers (UI/IO) dep
 |  | (types.h, config.h)                         |  |
 |  +---------------------------------------------+  |
 +---------------------------------------------------+
+```
 
-🚀 Developer & User Guide
-📂 Folder Structure
+---
 
+## 🚀 Developer & User Guide
+
+### 📂 Folder Structure
+
+```text
 WORDS_COLLIDE/
 ├── assets/                 # Fonts, Dictionary.txt, .wav, and .mp3 files
 ├── include/                # Header files (.h)
@@ -115,36 +126,32 @@ WORDS_COLLIDE/
 │   ├── logic.c             
 │   └── main.c              
 └── README.md               # This documentation
+```
 
-⚙️ Prerequisites
-C Compiler: MinGW-w64 (32-bit i686 architecture recommended for optimal SDL2 compatibility).
+### ⚙️ Prerequisites
+* **C Compiler:** MinGW-w64 (32-bit `i686` architecture recommended for optimal SDL2 compatibility).
+* **Libraries:** SDL2, SDL2_ttf, SDL2_mixer.
+* **DLLs:** Ensure `SDL2.dll`, `SDL2_ttf.dll`, and `SDL2_mixer.dll` are in the root folder alongside the compiled executable.
 
-Libraries: SDL2, SDL2_ttf, SDL2_mixer.
+### 🔨 How to Build
 
-DLLs: Ensure SDL2.dll, SDL2_ttf.dll, and SDL2_mixer.dll are in the root folder alongside the compiled executable.
+**Using VS Code (`tasks.json`)**
+Press `Ctrl + Shift + B`. *(Ensure your tasks.json is configured to compile `${workspaceFolder}\\src\\*.c`)*
 
-🔨 How to Build
-Using VS Code (tasks.json)
-Press Ctrl + Shift + B. (Ensure your tasks.json is configured to compile ${workspaceFolder}\\src\\*.c)
+**Using Command Line (Windows PowerShell)**
+Navigate to the root `WORDS_COLLIDE` directory and run:
 
-Using Command Line (Windows PowerShell)
-Navigate to the root WORDS_COLLIDE directory and run:
-
-PowerShell
+```powershell
 gcc src/*.c -o main.exe -I"E:/SDL2-2.32.0/i686-w64-mingw32/include" -L"E:/SDL2-2.32.0/i686-w64-mingw32/lib" -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf -lSDL2_mixer
-🎮 How to Play
-Launch: Run ./main.exe.
+```
 
-Setup: Click "Start Game", enter Player 1 and Player 2 names, and press ENTER.
+### 🎮 How to Play
 
-Gameplay: * Click an empty tile to select it.
-
-Type a single letter on your keyboard.
-
-Press ENTER to lock the letter in.
-
-Scoring: Form valid words horizontally or vertically to score points based on length. Discovering predefined "Bonus Words" grants +15 points!
-
-Turn Timer: You have exactly 20 seconds to make a move (tracked by the green bar). If time runs out, your turn is skipped.
-
-Winning: The game lasts for exactly 10 minutes. The highest score wins.
+1. **Launch:** Run `./main.exe`.
+2. **Setup:** Click "Start Game", enter Player 1 and Player 2 names, and press `ENTER`.
+3. **Gameplay:** * Click an empty tile to select it.
+   * Type a single letter on your keyboard.
+   * Press `ENTER` to lock the letter in. 
+4. **Scoring:** Form valid words horizontally or vertically to score points based on length. Discovering predefined "Bonus Words" grants +15 points!
+5. **Turn Timer:** You have exactly 20 seconds to make a move (tracked by the green bar). If time runs out, your turn is skipped.
+6. **Winning:** The game lasts for exactly 10 minutes. The highest score wins!
