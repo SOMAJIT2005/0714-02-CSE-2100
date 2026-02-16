@@ -1,0 +1,19 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#define WINDOW_WIDTH 800
+#define WINDOW_HEIGHT 800
+#define GRID_SIZE 20
+#define TILE_SIZE (WINDOW_WIDTH / GRID_SIZE)
+#define MAX_WORD_LENGTH 20
+#define MAX_SCORED_WORDS 50
+#define MAX_NAME_LENGTH 30 
+#define GAME_DURATION_MS 600000    
+#define WARNING_TIME_MS 50000      
+#define WARNING_INTERVAL_MS 10000  
+#define TURN_DURATION_MS 20000    
+#define BONUS_WORD_POINTS 15       
+#define MAX_BONUS_WORDS 50         
+#define MAX_WORDS_IN_DICT 200000 
+
+#endif // CONFIG_H
