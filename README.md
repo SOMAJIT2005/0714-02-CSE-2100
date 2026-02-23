@@ -2,7 +2,7 @@
 
 > **A 2-Player Real-Time Word Formation Board Game — Built in C with SDL2**
 >
-> **Course:** CSE 2100 Project Show &nbsp;|&nbsp; **Student:** 240238 &nbsp;|&nbsp; **Date:** February 2026
+> **Course:** CSE 2100 Project Show &nbsp;|&nbsp; **Student:** 0714-02 &nbsp;|&nbsp; **Date:** February 2026
 
 ---
 
@@ -27,7 +27,8 @@
 7. [How to Build](#️-how-to-build)
 8. [How to Play](#-how-to-play)
 9. [Scoring System](#-scoring-system)
-10. [Design Principles Applied](#-design-principles-applied)
+10. [AI Refactoring Prompts: ver1 → ver2](#-ai-refactoring-prompts-ver1--ver2)
+11. [Design Principles Applied](#-design-principles-applied)
 
 ---
 
@@ -550,6 +551,378 @@ Words are validated against `Dictionary.txt` using **binary search** (`bsearch()
 
 ---
 
+## 🤖 AI Refactoring Prompts: ver1 → ver2
+
+These are precise prompts that I have used to make the vertion 2.
+
+---
+
+### Prompt 1 — Split monolith into modules
+
+```
+I have a single monolithic C file called game.c that contains constants, structs,
+global variables, game logic, rendering, input handling, audio management, and the
+main loop all in one place.
+
+Refactor it into the following modular file structure without changing any logic:
+
+  include/config.h    — all #define constants only
+  include/types.h     — all typedef structs and enums only
+  include/logic.h     — declarations for logic functions
+  include/graphics.h  — declarations for graphics functions
+  include/input.h     — declarations for input functions
+  include/audio.h     — declarations for audio functions
+  src/logic.c         — dictionary loading, word validation, scoring
+  src/graphics.c      — all SDL2 rendering functions
+  src/input.c         — all SDL event handling functions
+  src/audio.c         — all SDL2_mixer functions
+  src/main.c          — main(), SDL init, game loop only
+
+Rules:
+- Do not change any logic, algorithms, or values
+- Each .c file must #include only the headers it actually needs
+- No global variables — carry shared SDL state in a struct called AppContext defined in types.h
+- Header files must use include guards (#ifndef / #define / #endif)
+
+Here is the full game.c:
+[paste game.c here]
+```
+
+---
+
+### Prompt 2 — Eliminate global variables with `AppContext`
+
+```
+The following C file has 11 global variables:
+  SDL_Window*, SDL_Renderer*, two TTF_Font*, four Mix_Chunk*, one Mix_Music*,
+  the dictionary array, and the word count integer.
+
+Refactor by:
+1. Creating a typedef struct called AppContext in a header file types.h that holds
+   all SDL/audio/font handles as named fields:
+     window, renderer, fontRegular, fontLarge,
+     sfxPlaceTile, sfxValidWord, sfxWarning, sfxWin, bgmWelcome
+
+2. Removing all 11 global variable declarations
+
+3. Declaring AppContext app in main() with zero-initialization: AppContext app = {0};
+
+4. Updating every function that previously read from globals to instead accept
+   AppContext* as its first parameter and access state through that pointer
+
+5. The dictionary array and word count must NOT go into AppContext — they belong
+   as static variables inside logic.c (encapsulated, not injectable)
+
+Do not change any logic. Show the updated function signatures and the AppContext struct.
+
+Here is the code:
+[paste game.c here]
+```
+
+---
+
+### Prompt 3 — Rename enums from `GAME_STATE_*` to `STATE_*`
+
+```
+In the following C code, rename all game state enum values by removing the
+redundant GAME_ prefix. Apply the rename consistently everywhere the values appear
+— in the enum definition, switch statements, if-conditions, and assignments.
+
+Rename map:
+  GAME_STATE_SPLASH    → STATE_SPLASH
+  GAME_STATE_GET_NAMES → STATE_GET_NAMES
+  GAME_STATE_PLAYING   → STATE_PLAYING
+  GAME_STATE_GAME_OVER → STATE_GAME_OVER
+  GAME_STATE_RESTART   → STATE_RESTART
+  GAME_STATE_QUIT      → STATE_QUIT
+
+Also rename the field inside the GameState struct:
+  game_state → currentState
+
+Update every usage of game->game_state and game.game_state to match.
+Do not change anything else.
+
+Here is the code:
+[paste game.c here]
+```
+
+---
+
+### Prompt 4 — Rename all struct fields to `camelCase` with `is` boolean prefix
+
+```
+Rename every field in the GameState and Button structs from snake_case to camelCase.
+Boolean fields must also receive an "is" prefix. Apply every rename consistently
+across all usages in the entire file.
+
+GameState field renames:
+  player_names        → playerNames
+  current_name_input  → currentNameInput
+  game_start_time     → gameStartTime
+  last_warning_time   → lastWarningTime
+  turn_start_time     → turnStartTime
+  current_player      → currentPlayer
+  current_letter      → currentLetter
+  selected_x          → selectedX
+  selected_y          → selectedY
+  tile_selected       → isTileSelected      ← boolean: add "is" prefix
+  scored_word_count   → scoredWordCount
+  scored_words        → scoredWords
+  give_up_button      → giveUpButton
+  play_again_button   → playAgainButton
+  start_game_button   → startGameButton
+
+Button field renames:
+  hovered             → isHovered           ← boolean: add "is" prefix
+
+Do not change any logic, values, or function names. Only rename struct fields.
+
+Here is the code:
+[paste game.c here]
+```
+
+---
+
+### Prompt 5 — Rename all functions to `Module_ActionDescription` namespaced style
+
+```
+Rename every function in this C program from flat snake_case to a namespaced style
+using the format Module_ActionName (PascalCase after the underscore).
+Apply every rename consistently at both the definition site and all call sites.
+
+Rename map:
+  init_sdl()                → Core_InitSDL()
+  init_game()               → Core_InitGame()
+  cleanup()                 → Core_Cleanup()
+  load_dictionary()         → Logic_LoadDictionary()
+  is_valid_word()           → Logic_IsValidWord()
+  is_word_already_scored()  → Logic_IsWordAlreadyScored()
+  calculate_word_score()    → Logic_CalculateWordScore()
+  check_words_and_score()   → Logic_CheckAndScore()
+  is_bonus_word()           → Logic_IsBonusWord()
+  compare_strings()         → Logic_CompareStrings()
+  is_mouse_over_button()    → Input_IsMouseOverButton()
+  handle_splash_input()     → Input_HandleSplash()
+  handle_name_input()       → Input_HandleNames()
+  handle_game_input()       → Input_HandleGame()
+  handle_game_over_input()  → Input_HandleGameOver()
+  render_text()             → Graphics_DrawText()
+  render_text_centered()    → Graphics_DrawTextCentered()
+  render_button()           → Graphics_DrawButton()
+  render_splash_screen()    → Graphics_RenderSplashScreen()
+  render_name_input()       → Graphics_RenderNameInput()
+  render_game()             → Graphics_RenderGame()
+  render_game_over()        → Graphics_RenderGameOver()
+
+Also rename these internal data variables:
+  giant_dictionary[][]  → loadedDictionary[][]
+  actual_word_count     → totalLoadedWords
+  bonus_words[]         → specialBonusWords[]
+  bonus_word_count      → totalBonusWords
+
+Do not change any logic or struct fields.
+
+Here is the code:
+[paste game.c here]
+```
+
+---
+
+### Prompt 6 — Improve the word-scanning loop in the scoring function
+
+```
+In the function check_words_and_score() (or Logic_CheckAndScore() if already renamed),
+the horizontal and vertical word-scanning for loops use a complex combined condition
+that is hard to read:
+
+  // Current (hard to read):
+  for (int i = h_start; i < GRID_SIZE && (game->grid[i][y] != '\0' || i == x); i++) {
+      if (h_len >= MAX_WORD_LENGTH - 1) break;
+      h_word[h_len++] = (i == x) ? letter : game->grid[i][y];
+  }
+
+Rewrite both the horizontal and vertical loops using this cleaner pattern:
+1. Resolve the current tile into a named local variable (currentTile) at the top of the loop body
+2. Use an explicit early break when currentTile == '\0' instead of encoding it in the loop condition
+3. Rename all short/abbreviated local variables to descriptive full names:
+     h_word  → horizontalWord    v_word  → verticalWord
+     h_start → startColumn       v_start → startRow
+     h_len   → currentLength     v_len   → currentLength  (reuse clearly)
+     x, y params → targetCol, targetRow
+     letter param → placedLetter
+
+The logic outcome (which words are found and scored) must be identical.
+Do not change anything outside these two loops.
+
+Here is the function:
+[paste check_words_and_score() here]
+```
+
+---
+
+### Prompt 7 — Replace raw `Mix_*` audio calls with a wrapper API
+
+```
+Currently, SDL2_mixer functions (Mix_PlayChannel, Mix_HaltMusic, Mix_PlayMusic) are
+called directly in 3 different functions across the file — 8 call sites total.
+
+Create a small audio wrapper module with these 3 functions in audio.c:
+
+  void Audio_PlaySound(Mix_Chunk *sound)  — null-checks sound, then calls Mix_PlayChannel(-1, sound, 0)
+  void Audio_PlayMusic(Mix_Music *music)  — null-checks music, then calls Mix_PlayMusic(music, -1)
+  void Audio_StopMusic(void)              — calls Mix_HaltMusic()
+
+Then replace every raw Mix_* call site in the rest of the code with the appropriate wrapper:
+  Mix_HaltMusic()                      → Audio_StopMusic()
+  Mix_PlayChannel(-1, sound_win, 0)    → Audio_PlaySound(app->sfxWin)
+  Mix_PlayChannel(-1, sound_place_tile, 0) → Audio_PlaySound(app->sfxPlaceTile)
+  Mix_PlayChannel(-1, sound_valid_word, 0) → Audio_PlaySound(app->sfxValidWord)
+  Mix_PlayChannel(-1, sound_warning, 0)   → Audio_PlaySound(app->sfxWarning)
+  Mix_PlayMusic(music_welcome, -1)     → Audio_PlayMusic(app->bgmWelcome)
+
+The null check inside each wrapper prevents crashes if an asset failed to load.
+No other logic should change.
+
+Here is the code:
+[paste the relevant functions here]
+```
+
+---
+
+### Prompt 8 — Add null safety to the cleanup function
+
+```
+The current cleanup() function frees all SDL resources unconditionally, which will
+crash if any resource failed to load during initialization:
+
+  Mix_FreeChunk(sound_place_tile);   // unsafe if NULL
+  TTF_CloseFont(font);               // unsafe if NULL
+  SDL_DestroyRenderer(renderer);     // unsafe if NULL
+
+Rewrite cleanup() (or split it into Audio_Cleanup() and Core_Cleanup()) so that
+every resource is null-checked before being freed:
+
+  if (handle) FreeFunction(handle);
+
+The final cleanup order must be:
+  1. SDL_StopTextInput()
+  2. Free all Mix_Chunk handles (with null check)
+  3. Free Mix_Music handle (with null check)
+  4. Mix_Quit()
+  5. Close TTF fonts (with null check)
+  6. SDL_DestroyRenderer (with null check)
+  7. SDL_DestroyWindow (with null check)
+  8. TTF_Quit()
+  9. SDL_Quit()
+
+Do not change anything else.
+
+Here is the cleanup function:
+[paste cleanup() here]
+```
+
+---
+
+### Prompt 9 — Mark internal functions and data as `static`
+
+```
+In the following C module, identify every function and variable that is only used
+within this single file and not declared in any header (.h) file.
+Add the static keyword to each of those definitions to enforce information hiding
+and prevent accidental linkage from other translation units.
+
+For logic.c, the following must become static:
+  — char loadedDictionary[][] array
+  — int totalLoadedWords variable
+  — const char* specialBonusWords[] array
+  — const int totalBonusWords variable
+  — Logic_CompareStrings() function
+  — Logic_IsWordAlreadyScored() function
+  — Logic_CalculateWordScore() function
+  — Logic_IsBonusWord() function
+
+For graphics.c, mark as static:
+  — Graphics_DrawText() function
+  — Graphics_DrawTextCentered() function
+  — Graphics_DrawButton() function
+
+For input.c, mark as static:
+  — Input_IsMouseOverButton() function
+
+For main.c, mark as static:
+  — Core_InitSDL() function
+  — Core_InitGame() function
+  — Core_Cleanup() function
+
+Do not change any logic. Only add the static keyword to the listed items.
+
+Here is the file:
+[paste the relevant .c file here]
+```
+
+---
+
+### Prompt 10 — Full end-to-end refactor (single master prompt)
+
+> Use this if you want to perform the entire ver1 → ver2 transformation in one pass.
+
+```
+I have a monolithic C game file called game.c (632 lines). Refactor it completely
+into a modular, professional architecture following all of these rules simultaneously:
+
+FILE STRUCTURE
+- Split into: src/main.c, src/logic.c, src/graphics.c, src/input.c, src/audio.c
+- Create headers: include/config.h, include/types.h, include/logic.h,
+  include/graphics.h, include/input.h, include/audio.h
+- Use #ifndef include guards on all headers
+
+GLOBAL VARIABLES
+- Remove all 11 global variables
+- Bundle SDL_Window*, SDL_Renderer*, both TTF_Font*, all Mix_Chunk* and Mix_Music*
+  into a typedef struct AppContext in include/types.h
+- Dictionary array and word count become static variables inside logic.c only
+
+NAMING — Enums
+- Remove GAME_ prefix: GAME_STATE_SPLASH → STATE_SPLASH (apply to all 6 values)
+
+NAMING — Struct fields (snake_case → camelCase, booleans get "is" prefix)
+- game_state→currentState, player_names→playerNames, tile_selected→isTileSelected,
+  hovered→isHovered (apply the full rename list to all fields)
+
+NAMING — Functions (flat → Module_Action namespaced)
+- init_sdl→Core_InitSDL, load_dictionary→Logic_LoadDictionary,
+  render_game→Graphics_RenderGame, handle_game_input→Input_HandleGame, etc.
+  (apply the full rename map to all 22 functions)
+
+NAMING — Internal data
+- giant_dictionary→loadedDictionary, actual_word_count→totalLoadedWords,
+  bonus_words→specialBonusWords, bonus_word_count→totalBonusWords
+
+ALGORITHM — Word scanning loop
+- Rewrite the compact for-loop condition in check_words_and_score() into a
+  cleaner loop that resolves currentTile first, then uses an explicit break on '\0'
+
+AUDIO — Wrapper API
+- Create Audio_PlaySound(), Audio_PlayMusic(), Audio_StopMusic() in audio.c
+- Replace all 8 raw Mix_* call sites with these wrappers
+- Add null guard inside each wrapper
+
+CLEANUP SAFETY
+- Null-check every resource handle before calling its free/close/destroy function
+
+STATIC SCOPE
+- Mark all internal-only functions and data as static in their respective .c files
+- Only functions declared in a .h header should have external linkage
+
+OUTPUT: Provide all 11 files (5 .c + 6 .h) as separate clearly labeled code blocks.
+Do not change any game logic, values, constants, or algorithms beyond what is listed.
+
+Here is game.c:
+[paste game.c here]
+```
+
+---
+
 ## 🧠 Design Principles Applied
 
 | Principle | ver1 Status | ver2 Implementation |
@@ -566,4 +939,4 @@ Words are validated against `Dictionary.txt` using **binary search** (`bsearch()
 
 ---
 
-*WORDS COLLIDE — CSE 2100 Project Show · Student ID 240238 · February 2026*
+*WORDS COLLIDE — CSE 2100 Project Show · Student ID 0714-02 · February 2026*
