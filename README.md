@@ -2,7 +2,7 @@
 
 > **A 2-Player Real-Time Word Formation Board Game — Built in C with SDL2**
 >
-> **Course:** CSE 2100 Project Show &nbsp;|&nbsp; **Student:** 0714-02 &nbsp;|&nbsp; **Date:** February 2026
+> **Course:** CSE 2100 Project Show &nbsp;|&nbsp; **Student:** 240238 &nbsp;|&nbsp; **Date:** February 2026
 
 ---
 
@@ -566,4 +566,4 @@ Words are validated against `Dictionary.txt` using **binary search** (`bsearch()
 
 ---
 
-*WORDS COLLIDE — CSE 2100 Project Show · Student ID 0714-02 · February 2026*
+*WORDS COLLIDE — CSE 2100 Project Show · Student ID 240238 · February 2026*
