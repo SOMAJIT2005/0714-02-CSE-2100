@@ -4,14 +4,13 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-// Encapsulated purely inside this module (SRP)
-static char s_giantDictionary[MAX_WORDS_IN_DICT][MAX_WORD_LENGTH];
-static int s_actualWordCount = 0;
+static char loadedDictionary[MAX_WORDS_IN_DICT][MAX_WORD_LENGTH];
+static int totalLoadedWords = 0;
 
-static const char* s_bonusWords[MAX_BONUS_WORDS] = {
+static const char* specialBonusWords[MAX_BONUS_WORDS] = {
     "BONUS", "EXTRA", "SPECIAL", "MAGIC", "EYE", "GREEN"
 };
-static const int s_bonusWordCount = 6; 
+static const int totalBonusWords = 6; 
 
 static int Logic_CompareStrings(const void *a, const void *b) {
     return strcmp((const char *)a, (const char *)b);
@@ -23,98 +22,148 @@ void Logic_LoadDictionary(void) {
         printf("FATAL ERROR: assets/Dictionary.txt not found!\n");
         return;
     }
+    
     printf("Loading dictionary...\n");
-    while (s_actualWordCount < MAX_WORDS_IN_DICT && 
-           fscanf(file, "%s", s_giantDictionary[s_actualWordCount]) == 1) 
+    
+    while (totalLoadedWords < MAX_WORDS_IN_DICT && 
+           fscanf(file, "%s", loadedDictionary[totalLoadedWords]) == 1) 
     {
-        for(int i = 0; s_giantDictionary[s_actualWordCount][i]; i++){
-            s_giantDictionary[s_actualWordCount][i] = toupper(s_giantDictionary[s_actualWordCount][i]);
+        // Convert the word to uppercase for consistent checking
+        for (int index = 0; loadedDictionary[totalLoadedWords][index] != '\0'; index++) {
+            loadedDictionary[totalLoadedWords][index] = toupper(loadedDictionary[totalLoadedWords][index]);
         }
-        s_actualWordCount++;
+        totalLoadedWords++;
     }
+    
     fclose(file);
-    printf("Loaded %d words into memory.\n", s_actualWordCount);
+    printf("Loaded %d words into memory.\n", totalLoadedWords);
 }
 
 bool Logic_IsValidWord(const char *word) {
-    char tempWord[MAX_WORD_LENGTH];
-    strcpy(tempWord, word);
-    for(int i = 0; tempWord[i]; i++){
-      tempWord[i] = toupper(tempWord[i]);
+    char uppercaseWord[MAX_WORD_LENGTH];
+    strcpy(uppercaseWord, word);
+    
+    for (int index = 0; uppercaseWord[index] != '\0'; index++) {
+      uppercaseWord[index] = toupper(uppercaseWord[index]);
     }
-    void *result = bsearch(tempWord, s_giantDictionary, s_actualWordCount, MAX_WORD_LENGTH, Logic_CompareStrings); 
-    return (result != NULL);
+    
+    void *searchResult = bsearch(uppercaseWord, loadedDictionary, totalLoadedWords, MAX_WORD_LENGTH, Logic_CompareStrings); 
+    return (searchResult != NULL);
 }
 
 static bool Logic_IsWordAlreadyScored(GameState *game, const char *word) {
     for (int i = 0; i < game->scoredWordCount; i++) {
-        if (strcasecmp(word, game->scoredWords[i]) == 0) return true;
+        if (strcasecmp(word, game->scoredWords[i]) == 0) {
+            return true;
+        }
     }
     return false;
 }
 
 static int Logic_CalculateWordScore(const char *word) {
-    int length = 0;
-    for (int i = 0; word[i]; i++) {
-        if (isalpha(word[i])) length++;
+    int lengthScore = 0;
+    for (int i = 0; word[i] != '\0'; i++) {
+        if (isalpha(word[i])) {
+            lengthScore++;
+        }
     }
-    return length;
+    return lengthScore;
 }
 
 static bool Logic_IsBonusWord(const char *word) {
-    char upperWord[MAX_WORD_LENGTH];
-    strcpy(upperWord, word);
-    for(int i = 0; upperWord[i]; i++) {
-      upperWord[i] = toupper(upperWord[i]);
+    char uppercaseWord[MAX_WORD_LENGTH];
+    strcpy(uppercaseWord, word);
+    
+    for (int i = 0; uppercaseWord[i] != '\0'; i++) {
+      uppercaseWord[i] = toupper(uppercaseWord[i]);
     }
-    for (int i = 0; i < s_bonusWordCount; i++) {
-        if (strcmp(upperWord, s_bonusWords[i]) == 0) return true; 
+    
+    for (int i = 0; i < totalBonusWords; i++) {
+        if (strcmp(uppercaseWord, specialBonusWords[i]) == 0) {
+            return true; 
+        }
     }
     return false;
 }
 
-int Logic_CheckAndScore(GameState *game, int x, int y, char letter) {
-    int totalScore = 0;
+int Logic_CheckAndScore(GameState *game, int targetCol, int targetRow, char placedLetter) {
+    int totalScoreGained = 0;
     
-    // Horizontal Check
-    char hWord[MAX_WORD_LENGTH] = "";
-    int hStart = x;
-    while (hStart > 0 && game->grid[hStart - 1][y] != '\0') hStart--;
-    int hLen = 0;
-    for (int i = hStart; i < GRID_SIZE && (game->grid[i][y] != '\0' || i == x); i++) {
-        if (hLen >= MAX_WORD_LENGTH - 1) break;
-        hWord[hLen++] = (i == x) ? letter : game->grid[i][y];
+    // -------------------------
+    // 1. Horizontal Word Check
+    // -------------------------
+    char horizontalWord[MAX_WORD_LENGTH] = "";
+    int startColumn = targetCol;
+    
+    // Find where the word starts by looking left
+    while (startColumn > 0 && game->grid[startColumn - 1][targetRow] != '\0') {
+        startColumn--;
     }
-    hWord[hLen] = '\0';
     
-    if (hLen > 1 && Logic_IsValidWord(hWord) && !Logic_IsWordAlreadyScored(game, hWord)) {
-        int score = Logic_CalculateWordScore(hWord);
-        if (Logic_IsBonusWord(hWord)) score += BONUS_WORD_POINTS;
-        totalScore += score;
+    // Read the word left-to-right
+    int currentLength = 0;
+    for (int col = startColumn; col < GRID_SIZE; col++) {
+        char currentTile = (col == targetCol) ? placedLetter : game->grid[col][targetRow];
+        
+        if (currentTile == '\0') break; // Blank space ends the word
+        
+        if (currentLength < MAX_WORD_LENGTH - 1) {
+            horizontalWord[currentLength++] = currentTile;
+        }
+    }
+    horizontalWord[currentLength] = '\0';
+    
+    // Validate and score horizontal word
+    if (currentLength > 1 && Logic_IsValidWord(horizontalWord) && !Logic_IsWordAlreadyScored(game, horizontalWord)) {
+        int wordScore = Logic_CalculateWordScore(horizontalWord);
+        if (Logic_IsBonusWord(horizontalWord)) {
+            wordScore += BONUS_WORD_POINTS;
+        }
+        
+        totalScoreGained += wordScore;
+        
         if (game->scoredWordCount < MAX_SCORED_WORDS) {
-            strcpy(game->scoredWords[game->scoredWordCount++], hWord);
+            strcpy(game->scoredWords[game->scoredWordCount++], horizontalWord);
         }
     }
 
-    // Vertical Check
-    char vWord[MAX_WORD_LENGTH] = "";
-    int vStart = y;
-    while (vStart > 0 && game->grid[x][vStart - 1] != '\0') vStart--;
-    int vLen = 0;
-    for (int i = vStart; i < GRID_SIZE && (game->grid[x][i] != '\0' || i == y); i++) {
-        if (vLen >= MAX_WORD_LENGTH - 1) break;
-        vWord[vLen++] = (i == y) ? letter : game->grid[x][i];
-    }
-    vWord[vLen] = '\0';
+    // -----------------------
+    // 2. Vertical Word Check
+    // -----------------------
+    char verticalWord[MAX_WORD_LENGTH] = "";
+    int startRow = targetRow;
     
-    if (vLen > 1 && Logic_IsValidWord(vWord) && !Logic_IsWordAlreadyScored(game, vWord)) {
-        int score = Logic_CalculateWordScore(vWord);
-        if (Logic_IsBonusWord(vWord)) score += BONUS_WORD_POINTS;
-        totalScore += score;
+    // Find where the word starts by looking up
+    while (startRow > 0 && game->grid[targetCol][startRow - 1] != '\0') {
+        startRow--;
+    }
+    
+    // Read the word top-to-bottom
+    currentLength = 0;
+    for (int row = startRow; row < GRID_SIZE; row++) {
+        char currentTile = (row == targetRow) ? placedLetter : game->grid[targetCol][row];
+        
+        if (currentTile == '\0') break; // Blank space ends the word
+        
+        if (currentLength < MAX_WORD_LENGTH - 1) {
+            verticalWord[currentLength++] = currentTile;
+        }
+    }
+    verticalWord[currentLength] = '\0';
+    
+    // Validate and score vertical word
+    if (currentLength > 1 && Logic_IsValidWord(verticalWord) && !Logic_IsWordAlreadyScored(game, verticalWord)) {
+        int wordScore = Logic_CalculateWordScore(verticalWord);
+        if (Logic_IsBonusWord(verticalWord)) {
+            wordScore += BONUS_WORD_POINTS;
+        }
+        
+        totalScoreGained += wordScore;
+        
         if (game->scoredWordCount < MAX_SCORED_WORDS) {
-            strcpy(game->scoredWords[game->scoredWordCount++], vWord);
+            strcpy(game->scoredWords[game->scoredWordCount++], verticalWord);
         }
     }
     
-    return totalScore;
+    return totalScoreGained;
 }

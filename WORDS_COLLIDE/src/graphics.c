@@ -2,50 +2,57 @@
 #include <string.h>
 #include <stdio.h>
 
-static void Graphics_DrawText(AppContext *app, TTF_Font *fontToUse, const char *text, int x, int y, SDL_Color color) {
-    SDL_Surface *surface = TTF_RenderText_Solid(fontToUse, text, color);
-    if (surface) {
-        SDL_Texture *texture = SDL_CreateTextureFromSurface(app->renderer, surface);
-        SDL_Rect rect = {x, y, surface->w, surface->h};
-        SDL_RenderCopy(app->renderer, texture, NULL, &rect);
-        SDL_DestroyTexture(texture);
-        SDL_FreeSurface(surface);
+static void Graphics_DrawText(AppContext *app, TTF_Font *fontToUse, const char *text, int xPosition, int yPosition, SDL_Color color) {
+    SDL_Surface *textSurface = TTF_RenderText_Solid(fontToUse, text, color);
+    if (textSurface) {
+        SDL_Texture *textTexture = SDL_CreateTextureFromSurface(app->renderer, textSurface);
+        SDL_Rect renderQuad = {xPosition, yPosition, textSurface->w, textSurface->h};
+        
+        SDL_RenderCopy(app->renderer, textTexture, NULL, &renderQuad);
+        
+        SDL_DestroyTexture(textTexture);
+        SDL_FreeSurface(textSurface);
     }
 }
 
-static void Graphics_DrawTextCentered(AppContext *app, TTF_Font *fontToUse, const char *text, int y, SDL_Color color) {
+static void Graphics_DrawTextCentered(AppContext *app, TTF_Font *fontToUse, const char *text, int yPosition, SDL_Color color) {
     int textWidth = 0, textHeight = 0;
     TTF_SizeText(fontToUse, text, &textWidth, &textHeight);
-    int x = (WINDOW_WIDTH - textWidth) / 2;
-    Graphics_DrawText(app, fontToUse, text, x, y, color);
+    
+    int centeredXPosition = (WINDOW_WIDTH - textWidth) / 2;
+    Graphics_DrawText(app, fontToUse, text, centeredXPosition, yPosition, color);
 }
 
 static void Graphics_DrawButton(AppContext *app, Button *button) {
-    SDL_Color btnColor = {100, 50, 150, 255}; 
-    SDL_Color hoverColor = {160, 130, 200, 255}; 
-    SDL_Color textColor = {255, 255, 255, 255}; 
+    SDL_Color defaultColor = {100, 50, 150, 255}; 
+    SDL_Color hoverColor   = {160, 130, 200, 255}; 
+    SDL_Color textColor    = {255, 255, 255, 255}; 
 
     if (button->isHovered) {
         SDL_SetRenderDrawColor(app->renderer, hoverColor.r, hoverColor.g, hoverColor.b, hoverColor.a);
     } else {
-        SDL_SetRenderDrawColor(app->renderer, btnColor.r, btnColor.g, btnColor.b, btnColor.a);
+        SDL_SetRenderDrawColor(app->renderer, defaultColor.r, defaultColor.g, defaultColor.b, defaultColor.a);
     }
     
     SDL_RenderFillRect(app->renderer, &button->rect);
 
     int textWidth = 0, textHeight = 0;
     TTF_SizeText(app->fontRegular, button->text, &textWidth, &textHeight);
+    
     int textX = button->rect.x + (button->rect.w - textWidth) / 2;
     int textY = button->rect.y + (button->rect.h - textHeight) / 2;
+    
     Graphics_DrawText(app, app->fontRegular, button->text, textX, textY, textColor);
 }
 
 void Graphics_RenderSplashScreen(AppContext *app, GameState *game) {
     SDL_SetRenderDrawColor(app->renderer, 230, 210, 255, 255);
     SDL_RenderClear(app->renderer);
+    
     SDL_Color titleColor = {100, 50, 150, 255}; 
     Graphics_DrawTextCentered(app, app->fontLarge, "WORDS_COLLIDE", 250, titleColor);
     Graphics_DrawButton(app, &game->startGameButton);
+    
     SDL_RenderPresent(app->renderer);
 }
 
@@ -53,32 +60,34 @@ void Graphics_RenderNameInput(AppContext *app, GameState *game) {
     SDL_SetRenderDrawColor(app->renderer, 230, 210, 255, 255);
     SDL_RenderClear(app->renderer);
     
-    SDL_Color titleColor = {100, 50, 150, 255}; 
-    SDL_Color boxColor = {160, 130, 200, 255};   
-    SDL_Color textColor = {0, 0, 0, 255};         
+    SDL_Color titleColor  = {100, 50, 150, 255}; 
+    SDL_Color boxColor    = {160, 130, 200, 255};   
+    SDL_Color textColor   = {0, 0, 0, 255};         
     SDL_Color promptColor = {50, 50, 50, 255};  
     
     Graphics_DrawTextCentered(app, app->fontLarge, "Enter Player Names", 150, titleColor);
     
-    char prompt[50];
-    sprintf(prompt, "Enter Player %d Name:", game->currentNameInput + 1);
-    Graphics_DrawTextCentered(app, app->fontRegular, prompt, 250, promptColor);
+    char promptMessage[50];
+    sprintf(promptMessage, "Enter Player %d Name:", game->currentNameInput + 1);
+    Graphics_DrawTextCentered(app, app->fontRegular, promptMessage, 250, promptColor);
     
-    SDL_Rect input_box_rect = { 100, 300, WINDOW_WIDTH - 200, 50 };
+    SDL_Rect inputBoxRect = { 100, 300, WINDOW_WIDTH - 200, 50 };
     SDL_SetRenderDrawColor(app->renderer, boxColor.r, boxColor.g, boxColor.b, boxColor.a);
-    SDL_RenderDrawRect(app->renderer, &input_box_rect);
+    SDL_RenderDrawRect(app->renderer, &inputBoxRect);
     
     const char *currentName = game->playerNames[game->currentNameInput];
     int textWidth = 0, textHeight = 0;
+    
     if (strlen(currentName) > 0) {
         TTF_SizeText(app->fontRegular, currentName, &textWidth, &textHeight);
-        Graphics_DrawText(app, app->fontRegular, currentName, input_box_rect.x + 10, input_box_rect.y + 10, textColor);
+        Graphics_DrawText(app, app->fontRegular, currentName, inputBoxRect.x + 10, inputBoxRect.y + 10, textColor);
     }
     
+    // Blinking cursor logic
     if ((SDL_GetTicks() / 500) % 2 == 0) {
-        SDL_Rect cursor_rect = { input_box_rect.x + 10 + textWidth + 2, input_box_rect.y + 8, 3, 34 };
+        SDL_Rect cursorRect = { inputBoxRect.x + 10 + textWidth + 2, inputBoxRect.y + 8, 3, 34 };
         SDL_SetRenderDrawColor(app->renderer, textColor.r, textColor.g, textColor.b, textColor.a);
-        SDL_RenderFillRect(app->renderer, &cursor_rect);
+        SDL_RenderFillRect(app->renderer, &cursorRect);
     }
     
     Graphics_DrawTextCentered(app, app->fontRegular, "Press ENTER to confirm", 400, promptColor);
@@ -89,73 +98,81 @@ void Graphics_RenderGame(AppContext *app, GameState *game) {
     SDL_SetRenderDrawColor(app->renderer, 230, 210, 255, 255);
     SDL_RenderClear(app->renderer);
     
-    // Timer
+    // Calculate Game Timer
     SDL_Color timerColor = {100, 50, 150, 255};
-    Uint32 elapsedTime = SDL_GetTicks() - game->gameStartTime;
-    Uint32 timeLeft = GAME_DURATION_MS - elapsedTime;
-    if (elapsedTime >= GAME_DURATION_MS) timeLeft = 0;
+    Uint32 timeSinceStart = SDL_GetTicks() - game->gameStartTime;
+    Uint32 timeRemaining = GAME_DURATION_MS > timeSinceStart ? GAME_DURATION_MS - timeSinceStart : 0;
     
-    int totalSeconds = timeLeft / 1000;
-    char timerText[20];
-    sprintf(timerText, "Time: %02d:%02d", totalSeconds / 60, totalSeconds % 60);
-    if (timeLeft < WARNING_TIME_MS && timeLeft > 0 && (SDL_GetTicks() / 250) % 2 == 0) { 
+    int totalSecondsLeft = timeRemaining / 1000;
+    int minutesLeft = totalSecondsLeft / 60;
+    int secondsLeft = totalSecondsLeft % 60;
+    
+    char timerString[20];
+    sprintf(timerString, "Time: %02d:%02d", minutesLeft, secondsLeft);
+    
+    // Make timer flash red if running low
+    if (timeRemaining < WARNING_TIME_MS && timeRemaining > 0 && (SDL_GetTicks() / 250) % 2 == 0) { 
         timerColor = (SDL_Color){255, 0, 0, 255};
     }
     
-    int tw = 0, th = 0;
-    TTF_SizeText(app->fontRegular, timerText, &tw, &th);
-    Graphics_DrawText(app, app->fontRegular, timerText, WINDOW_WIDTH - tw - 10, 10, timerColor);
+    int timerWidth = 0, timerHeight = 0;
+    TTF_SizeText(app->fontRegular, timerString, &timerWidth, &timerHeight);
+    Graphics_DrawText(app, app->fontRegular, timerString, WINDOW_WIDTH - timerWidth - 10, 10, timerColor);
 
-    // Turn Timer Bar
-    Uint32 turnElapsed = SDL_GetTicks() - game->turnStartTime;
-    float ratio = 1.0f - ((float)turnElapsed / TURN_DURATION_MS);
-    if (ratio < 0) ratio = 0;
+    // Calculate and Draw Turn Timer Progress Bar
+    Uint32 timeSinceTurnStart = SDL_GetTicks() - game->turnStartTime;
+    float timeRemainingPercentage = 1.0f - ((float)timeSinceTurnStart / TURN_DURATION_MS);
+    if (timeRemainingPercentage < 0) timeRemainingPercentage = 0;
 
-    SDL_Rect barBg = { 10, 10, 200, 15 };
-    SDL_Rect barFg = { 10, 10, (int)(200 * ratio), 15 };
+    SDL_Rect progressBarBackground = { 10, 10, 200, 15 };
+    SDL_Rect progressBarForeground = { 10, 10, (int)(200 * timeRemainingPercentage), 15 };
     
-    SDL_SetRenderDrawColor(app->renderer, 200, 0, 0, 255); 
-    SDL_RenderFillRect(app->renderer, &barBg);
-    SDL_SetRenderDrawColor(app->renderer, 0, 200, 0, 255); 
-    SDL_RenderFillRect(app->renderer, &barFg);
+    SDL_SetRenderDrawColor(app->renderer, 200, 0, 0, 255); // Red Background
+    SDL_RenderFillRect(app->renderer, &progressBarBackground);
+    
+    SDL_SetRenderDrawColor(app->renderer, 0, 200, 0, 255); // Green Foreground
+    SDL_RenderFillRect(app->renderer, &progressBarForeground);
+    
     Graphics_DrawText(app, app->fontRegular, "Turn Time", 10, 30, (SDL_Color){50, 50, 50, 255});
 
-    // Grid
+    // Draw Grid Lines
     SDL_SetRenderDrawColor(app->renderer, 160, 130, 200, 255);
-    for (int i = 0; i <= GRID_SIZE; i++) {
-        SDL_RenderDrawLine(app->renderer, i * TILE_SIZE, 0, i * TILE_SIZE, WINDOW_HEIGHT);
-        SDL_RenderDrawLine(app->renderer, 0, i * TILE_SIZE, WINDOW_WIDTH, i * TILE_SIZE);
+    for (int line = 0; line <= GRID_SIZE; line++) {
+        SDL_RenderDrawLine(app->renderer, line * TILE_SIZE, 0, line * TILE_SIZE, WINDOW_HEIGHT);
+        SDL_RenderDrawLine(app->renderer, 0, line * TILE_SIZE, WINDOW_WIDTH, line * TILE_SIZE);
     }
     
-    for (int i = 0; i < GRID_SIZE; i++) {
-        for (int j = 0; j < GRID_SIZE; j++) {
-            if (game->grid[i][j]) {
-                char letter[2] = {game->grid[i][j], '\0'};
-                Graphics_DrawText(app, app->fontRegular, letter, i * TILE_SIZE + 10, j * TILE_SIZE + 10, (SDL_Color){0,0,0,255});
+    // Draw Placed Tiles
+    for (int col = 0; col < GRID_SIZE; col++) {
+        for (int row = 0; row < GRID_SIZE; row++) {
+            if (game->grid[col][row] != '\0') {
+                char letterString[2] = {game->grid[col][row], '\0'};
+                Graphics_DrawText(app, app->fontRegular, letterString, col * TILE_SIZE + 10, row * TILE_SIZE + 10, (SDL_Color){0,0,0,255});
             }
         }
     }
     
-    // Selection
+    // Highlight Selected Tile
     if (game->isTileSelected) {
         SDL_SetRenderDrawColor(app->renderer, 150, 150, 150, 100);
-        SDL_Rect rect = {game->selectedX * TILE_SIZE, game->selectedY * TILE_SIZE, TILE_SIZE, TILE_SIZE};
-        SDL_RenderFillRect(app->renderer, &rect);
+        SDL_Rect highlightRect = {game->selectedX * TILE_SIZE, game->selectedY * TILE_SIZE, TILE_SIZE, TILE_SIZE};
+        SDL_RenderFillRect(app->renderer, &highlightRect);
         
-        if (game->currentLetter) {
-            char letter[2] = {game->currentLetter, '\0'};
-            Graphics_DrawText(app, app->fontRegular, letter, game->selectedX * TILE_SIZE + 10, game->selectedY * TILE_SIZE + 10, (SDL_Color){0,0,0,255});
+        if (game->currentLetter != '\0') {
+            char currentLetterString[2] = {game->currentLetter, '\0'};
+            Graphics_DrawText(app, app->fontRegular, currentLetterString, game->selectedX * TILE_SIZE + 10, game->selectedY * TILE_SIZE + 10, (SDL_Color){0,0,0,255});
         }
     }
     
-    // Scores
-    char scoreText[200];
-    const char *p1Name = (strlen(game->playerNames[0]) > 0) ? game->playerNames[0] : "Player 1";
-    const char *p2Name = (strlen(game->playerNames[1]) > 0) ? game->playerNames[1] : "Player 2";
-    const char *turnName = (game->currentPlayer == 0) ? p1Name : p2Name;
-    sprintf(scoreText, "%s: %d  |  %s: %d  |  Turn: %s", p1Name, game->scores[0], p2Name, game->scores[1], turnName);
+    // Draw Scores
+    char scoreDisplayString[200];
+    const char *player1Name = (strlen(game->playerNames[0]) > 0) ? game->playerNames[0] : "Player 1";
+    const char *player2Name = (strlen(game->playerNames[1]) > 0) ? game->playerNames[1] : "Player 2";
+    const char *activePlayerName = (game->currentPlayer == 0) ? player1Name : player2Name;
     
-    Graphics_DrawText(app, app->fontRegular, scoreText, 10, WINDOW_HEIGHT - 40, (SDL_Color){0, 0, 0, 255});
+    sprintf(scoreDisplayString, "%s: %d  |  %s: %d  |  Turn: %s", player1Name, game->scores[0], player2Name, game->scores[1], activePlayerName);
+    
+    Graphics_DrawText(app, app->fontRegular, scoreDisplayString, 10, WINDOW_HEIGHT - 40, (SDL_Color){0, 0, 0, 255});
     Graphics_DrawButton(app, &game->giveUpButton);
     SDL_RenderPresent(app->renderer);
 }
@@ -164,30 +181,36 @@ void Graphics_RenderGameOver(AppContext *app, GameState *game) {
     SDL_SetRenderDrawColor(app->renderer, 230, 210, 255, 255);
     SDL_RenderClear(app->renderer);
     
-    Uint32 elapsedTime = SDL_GetTicks() - game->gameStartTime;
-    if (elapsedTime >= GAME_DURATION_MS) {
+    Uint32 timeSinceStart = SDL_GetTicks() - game->gameStartTime;
+    
+    if (timeSinceStart >= GAME_DURATION_MS) {
         Graphics_DrawTextCentered(app, app->fontLarge, "Time's Up!", 150, (SDL_Color){100, 50, 150, 255});
     } else {
         Graphics_DrawTextCentered(app, app->fontLarge, "Game Over", 150, (SDL_Color){100, 50, 150, 255});
     }
     
-    const char *p1Name = (strlen(game->playerNames[0]) > 0) ? game->playerNames[0] : "Player 1";
-    const char *p2Name = (strlen(game->playerNames[1]) > 0) ? game->playerNames[1] : "Player 2";
+    const char *player1Name = (strlen(game->playerNames[0]) > 0) ? game->playerNames[0] : "Player 1";
+    const char *player2Name = (strlen(game->playerNames[1]) > 0) ? game->playerNames[1] : "Player 2";
     
-    char p1Score[100], p2Score[100];
-    sprintf(p1Score, "%s's Score: %d", p1Name, game->scores[0]);
-    sprintf(p2Score, "%s's Score: %d", p2Name, game->scores[1]);
+    char p1ScoreString[100], p2ScoreString[100];
+    sprintf(p1ScoreString, "%s's Score: %d", player1Name, game->scores[0]);
+    sprintf(p2ScoreString, "%s's Score: %d", player2Name, game->scores[1]);
     
-    Graphics_DrawTextCentered(app, app->fontRegular, p1Score, 250, (SDL_Color){0, 0, 0, 255});
-    Graphics_DrawTextCentered(app, app->fontRegular, p2Score, 300, (SDL_Color){0, 0, 0, 255});
+    Graphics_DrawTextCentered(app, app->fontRegular, p1ScoreString, 250, (SDL_Color){0, 0, 0, 255});
+    Graphics_DrawTextCentered(app, app->fontRegular, p2ScoreString, 300, (SDL_Color){0, 0, 0, 255});
     
-    char winnerText[100];
-    if (game->scores[0] > game->scores[1]) sprintf(winnerText, "%s wins!", p1Name);
-    else if (game->scores[1] > game->scores[0]) sprintf(winnerText, "%s wins!", p2Name);
-    else sprintf(winnerText, "It's a tie!");
+    char winnerAnnouncement[100];
+    if (game->scores[0] > game->scores[1]) {
+        sprintf(winnerAnnouncement, "%s wins!", player1Name);
+    } else if (game->scores[1] > game->scores[0]) {
+        sprintf(winnerAnnouncement, "%s wins!", player2Name);
+    } else {
+        sprintf(winnerAnnouncement, "It's a tie!");
+    }
     
-    Graphics_DrawTextCentered(app, app->fontLarge, winnerText, 400, (SDL_Color){0, 100, 0, 255});
+    Graphics_DrawTextCentered(app, app->fontLarge, winnerAnnouncement, 400, (SDL_Color){0, 100, 0, 255});
     Graphics_DrawButton(app, &game->playAgainButton);
     Graphics_DrawTextCentered(app, app->fontRegular, "Press any key to exit", 550, (SDL_Color){50, 50, 50, 255});
+    
     SDL_RenderPresent(app->renderer);
 }

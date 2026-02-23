@@ -29,9 +29,11 @@ static void Core_InitGame(GameState *game, AppContext *app) {
     game->gameStartTime = 0; 
     game->lastWarningTime = 0; 
     game->turnStartTime = 0;
+    
     memset(game->playerNames[0], 0, MAX_NAME_LENGTH);
     memset(game->playerNames[1], 0, MAX_NAME_LENGTH);
     memset(game->grid, 0, sizeof(game->grid));
+    
     game->currentPlayer = 0;
     game->currentLetter = '\0';
     game->isTileSelected = false;
@@ -60,16 +62,18 @@ static void Core_InitGame(GameState *game, AppContext *app) {
 static void Core_Cleanup(AppContext *app) {
     SDL_StopTextInput();
     Audio_Cleanup(app);
+    
     if (app->fontRegular) TTF_CloseFont(app->fontRegular);
-    if (app->fontLarge) TTF_CloseFont(app->fontLarge); 
-    if (app->renderer) SDL_DestroyRenderer(app->renderer);
-    if (app->window) SDL_DestroyWindow(app->window);
+    if (app->fontLarge)   TTF_CloseFont(app->fontLarge); 
+    if (app->renderer)    SDL_DestroyRenderer(app->renderer);
+    if (app->window)      SDL_DestroyWindow(app->window);
+    
     TTF_Quit();
     SDL_Quit();
 }
 
 int main(int argc, char *argv[]) {
-    AppContext app = {0}; // Initialize to zero to prevent garbage pointer bugs
+    AppContext app = {0}; 
     GameState game;
 
     Logic_LoadDictionary();
@@ -84,36 +88,41 @@ int main(int argc, char *argv[]) {
             continue; 
         }
         
-        // Timer Updates (State Logic independent of Graphics or Input)
+        // Handle Game Timers
         if (game.currentState == STATE_PLAYING) {
             Uint32 currentTime = SDL_GetTicks();
-            Uint32 elapsedMs = currentTime - game.gameStartTime;
+            Uint32 timeSinceGameStarted = currentTime - game.gameStartTime;
+            Uint32 timeSinceTurnStarted = currentTime - game.turnStartTime;
             
-            if (elapsedMs >= GAME_DURATION_MS) {
+            // Check if entire match time is over
+            if (timeSinceGameStarted >= GAME_DURATION_MS) {
                 Audio_StopMusic(); 
                 Audio_PlaySound(app.sfxWin); 
                 game.currentState = STATE_GAME_OVER;
                 SDL_StopTextInput(); 
             }
             
-            Uint32 remainingMs = GAME_DURATION_MS - elapsedMs;
-            if (remainingMs < WARNING_TIME_MS) {
-                if (currentTime - game.lastWarningTime > WARNING_INTERVAL_MS) {
-                    Audio_PlaySound(app.sfxWarning); 
-                    game.lastWarningTime = currentTime; 
-                }
+            // Handle low-time warning sound
+            Uint32 totalRemainingTime = GAME_DURATION_MS - timeSinceGameStarted;
+            bool isTimeRunningOut = (totalRemainingTime < WARNING_TIME_MS);
+            bool isTimeForWarningBeep = (currentTime - game.lastWarningTime > WARNING_INTERVAL_MS);
+            
+            if (isTimeRunningOut && isTimeForWarningBeep) {
+                Audio_PlaySound(app.sfxWarning); 
+                game.lastWarningTime = currentTime; 
             }
 
-            if (currentTime - game.turnStartTime >= TURN_DURATION_MS) {
-                game.currentPlayer = (game.currentPlayer + 1) % 2;
+            // Check if player's turn time expired
+            if (timeSinceTurnStarted >= TURN_DURATION_MS) {
+                game.currentPlayer = (game.currentPlayer + 1) % 2; // Switch turn
                 game.isTileSelected = false;
                 game.currentLetter = '\0';
-                game.turnStartTime = SDL_GetTicks();
+                game.turnStartTime = SDL_GetTicks(); // Reset turn timer
                 SDL_StopTextInput();
             }
         }
 
-        // Input Polling
+        // Handle Inputs
         while (SDL_PollEvent(&event)) {
             switch (game.currentState) {
                 case STATE_SPLASH:     Input_HandleSplash(&event, &game); break;
@@ -126,7 +135,7 @@ int main(int argc, char *argv[]) {
 
         SDL_RaiseWindow(app.window);
         
-        // Rendering
+        // Render current state
         switch (game.currentState) {
             case STATE_SPLASH:     Graphics_RenderSplashScreen(&app, &game); break;
             case STATE_GET_NAMES:  Graphics_RenderNameInput(&app, &game); break;
@@ -135,7 +144,7 @@ int main(int argc, char *argv[]) {
             default: break;
         }
         
-        SDL_Delay(10);
+        SDL_Delay(10); // Standard tiny delay to stop UI loop from eating CPU
     }
     
     Core_Cleanup(&app);
