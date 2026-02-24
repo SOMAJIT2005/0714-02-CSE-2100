@@ -584,8 +584,6 @@ Rules:
 - No global variables — carry shared SDL state in a struct called AppContext defined in types.h
 - Header files must use include guards (#ifndef / #define / #endif)
 
-Here is the full game.c:
-[paste game.c here]
 ```
 
 ---
@@ -615,8 +613,6 @@ Refactor by:
 
 Do not change any logic. Show the updated function signatures and the AppContext struct.
 
-Here is the code:
-[paste game.c here]
 ```
 
 ---
@@ -642,8 +638,6 @@ Also rename the field inside the GameState struct:
 Update every usage of game->game_state and game.game_state to match.
 Do not change anything else.
 
-Here is the code:
-[paste game.c here]
 ```
 
 ---
@@ -677,8 +671,6 @@ Button field renames:
 
 Do not change any logic, values, or function names. Only rename struct fields.
 
-Here is the code:
-[paste game.c here]
 ```
 
 ---
@@ -722,8 +714,6 @@ Also rename these internal data variables:
 
 Do not change any logic or struct fields.
 
-Here is the code:
-[paste game.c here]
 ```
 
 ---
@@ -754,8 +744,6 @@ Rewrite both the horizontal and vertical loops using this cleaner pattern:
 The logic outcome (which words are found and scored) must be identical.
 Do not change anything outside these two loops.
 
-Here is the function:
-[paste check_words_and_score() here]
 ```
 
 ---
@@ -783,8 +771,6 @@ Then replace every raw Mix_* call site in the rest of the code with the appropri
 The null check inside each wrapper prevents crashes if an asset failed to load.
 No other logic should change.
 
-Here is the code:
-[paste the relevant functions here]
 ```
 
 ---
@@ -817,8 +803,6 @@ The final cleanup order must be:
 
 Do not change anything else.
 
-Here is the cleanup function:
-[paste cleanup() here]
 ```
 
 ---
@@ -856,8 +840,6 @@ For main.c, mark as static:
 
 Do not change any logic. Only add the static keyword to the listed items.
 
-Here is the file:
-[paste the relevant .c file here]
 ```
 
 ---
@@ -917,8 +899,6 @@ STATIC SCOPE
 OUTPUT: Provide all 11 files (5 .c + 6 .h) as separate clearly labeled code blocks.
 Do not change any game logic, values, constants, or algorithms beyond what is listed.
 
-Here is game.c:
-[paste game.c here]
 ```
 
 ---
