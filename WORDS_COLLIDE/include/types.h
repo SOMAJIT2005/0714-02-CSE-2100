@@ -9,6 +9,8 @@
 
 typedef enum {
     STATE_SPLASH,
+    STATE_MULTIPLAYER_MENU,
+    STATE_ENTER_IP,          // <-- NEW STATE
     STATE_GET_NAMES,
     STATE_PLAYING,
     STATE_GAME_OVER,
@@ -22,11 +24,11 @@ typedef struct {
     bool isHovered;
 } Button;
 
-// Core game data
 typedef struct {
     GameStateType currentState;
     char playerNames[2][MAX_NAME_LENGTH];
     int currentNameInput; 
+    char targetIP[16];       // <-- NEW: Stores the IP Address
     Uint32 gameStartTime; 
     Uint32 lastWarningTime; 
     Uint32 turnStartTime; 
@@ -40,12 +42,15 @@ typedef struct {
     char scoredWords[MAX_SCORED_WORDS][MAX_WORD_LENGTH];
     int scoredWordCount;
 
+    Button startGameButton;
+    Button multiplayerButton;
+    Button hostGameButton;
+    Button joinGameButton;
+    Button backButton;
     Button giveUpButton;
     Button playAgainButton;
-    Button startGameButton;
 } GameState;
 
-// Replaces all global variables (Dependency Injection)
 typedef struct {
     SDL_Window *window;
     SDL_Renderer *renderer;

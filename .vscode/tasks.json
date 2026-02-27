@@ -1,0 +1,43 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build WORDS_COLLIDE 2.0",
+            "type": "shell",
+            "command": "gcc",
+            "args": [
+                "WORDS_COLLIDE/src/main.c",
+                "WORDS_COLLIDE/src/audio.c",
+                "WORDS_COLLIDE/src/graphics.c",
+                "WORDS_COLLIDE/src/input.c",
+                "WORDS_COLLIDE/src/logic.c",
+                "WORDS_COLLIDE/src/network.c",
+                "-o",
+                "WORDS_COLLIDE/main.exe",
+                "-I", "E:/SDL2-2.32.0/i686-w64-mingw32/include",
+                "-L", "E:/SDL2-2.32.0/i686-w64-mingw32/lib",
+                "-lmingw32",
+                "-lSDL2main",
+                "-lSDL2",
+                "-lSDL2_ttf",
+                "-lSDL2_mixer",
+                "-lSDL2_net"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": []
+        }
+    ]
+}
