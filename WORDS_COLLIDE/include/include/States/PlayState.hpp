@@ -2,8 +2,6 @@
 #define PLAY_STATE_HPP
 
 #include "Core/IGameState.hpp"
-#include "UI/Button.hpp"
-#include <memory>
 
 class PlayState : public IGameState {
 public:
@@ -14,7 +12,6 @@ public:
 
 private:
     void processNetworkMove(GameEngine& engine);
-    std::shared_ptr<Button> giveUpBtn;
 };
 
 #endif // PLAY_STATE_HPP

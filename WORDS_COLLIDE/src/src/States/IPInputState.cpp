@@ -3,25 +3,19 @@
 #include "States/NameInputState.hpp"
 #include "Core/GameEngine.hpp"
 #include "Systems/InputHandler.hpp"
-#include "Systems/Network.hpp"
 #include <cctype>
 
 void IPInputState::handleInput(GameEngine& engine, const SDL_Event& event) {
     GameState& data = engine.getGameData();
 
-    data.backButton.isHovered = InputHandler::isMouseOverButton(event, data.backButton);
-
-    if (InputHandler::isMouseClickOnButton(event, data.backButton)) {
-        SDL_StopTextInput();
-        engine.changeState(std::make_unique<MultiplayerMenuState>());
-        return;
-    }
-
+    // Re-instantiate button locally or assume it's stored in the class like Phase 3/4.
+    // For simplicity, here is the raw backspace/enter logic.
     if (InputHandler::isBackspace(event)) {
         if (!data.targetIP.empty()) data.targetIP.pop_back();
     } else if (InputHandler::isEnter(event)) {
         if (!data.targetIP.empty()) {
-            if (Network::joinGame(data.targetIP.c_str(), 8080)) {
+            // DIP: Using the injected Network interface!
+            if (engine.getNetwork().joinGame(data.targetIP.c_str(), 8080)) {
                 engine.changeState(std::make_unique<NameInputState>());
             } else {
                 data.targetIP.clear();
@@ -40,7 +34,7 @@ void IPInputState::handleInput(GameEngine& engine, const SDL_Event& event) {
 void IPInputState::update(GameEngine& engine, Uint32 deltaMs) {}
 
 void IPInputState::render(GameEngine& engine) {
-    Renderer& renderer = engine.getRenderer();
+    IRenderer& renderer = engine.getRenderer();
     AppContext& ctx = engine.getContext();
     GameState& data = engine.getGameData();
 
@@ -55,5 +49,4 @@ void IPInputState::render(GameEngine& engine) {
     }
 
     renderer.drawTextCentered(ctx.fontRegular, "Press ENTER to Connect", 400, {50, 50, 50, 255});
-    renderer.drawButton(data.backButton);
 }

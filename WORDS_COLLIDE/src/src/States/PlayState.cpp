@@ -2,7 +2,6 @@
 #include "States/GameOverState.hpp"
 #include "Core/GameEngine.hpp"
 #include "Systems/InputHandler.hpp"
-#include "Systems/Network.hpp"
 #include <cctype>
 
 void PlayState::onEnter(GameEngine& engine) {
@@ -10,15 +9,15 @@ void PlayState::onEnter(GameEngine& engine) {
     data.gameStartTime = SDL_GetTicks();
     data.turnStartTime = SDL_GetTicks();
     engine.getAudio().stopMusic();
+
+    giveUpBtn = std::make_shared<Button>(SDL_Rect{WINDOW_WIDTH - 130, WINDOW_HEIGHT - 45, 120, 35}, "Give Up", engine.getContext().fontRegular);
 }
 
 void PlayState::handleInput(GameEngine& engine, const SDL_Event& event) {
     GameState& data = engine.getGameData();
-    Audio& audio = engine.getAudio();
+    IAudio& audio = engine.getAudio();
 
-    data.giveUpButton.isHovered = InputHandler::isMouseOverButton(event, data.giveUpButton);
-
-    if (InputHandler::isMouseClickOnButton(event, data.giveUpButton)) {
+    if (giveUpBtn->handleInput(event)) {
         audio.playSound(engine.getContext().sfxWin);
         engine.changeState(std::make_unique<GameOverState>());
         return;
@@ -47,13 +46,15 @@ void PlayState::handleInput(GameEngine& engine, const SDL_Event& event) {
         
         audio.playSound(engine.getContext().sfxPlaceTile);
 
+        // DIP: Using the injected Scorer interface!
         int score = engine.getScorer().checkAndScore(data, data.selectedX, data.selectedY, data.currentLetter);
         if (score > 0) {
             audio.playSound(engine.getContext().sfxValidWord);
             data.scores[data.currentPlayer] += score;
         }
 
-        Network::sendMove(data.selectedX, data.selectedY, letterToSend);
+        // DIP: Using the injected Network interface!
+        engine.getNetwork().sendMove(data.selectedX, data.selectedY, letterToSend);
 
         data.currentPlayer = (data.currentPlayer + 1) % 2;
         data.isTileSelected = false;
@@ -65,7 +66,7 @@ void PlayState::handleInput(GameEngine& engine, const SDL_Event& event) {
 
 void PlayState::update(GameEngine& engine, Uint32 deltaMs) {
     GameState& data = engine.getGameData();
-    Audio& audio = engine.getAudio();
+    IAudio& audio = engine.getAudio();
     Uint32 currentTime = SDL_GetTicks();
     Uint32 elapsedMs = currentTime - data.gameStartTime;
 
@@ -94,9 +95,11 @@ void PlayState::update(GameEngine& engine, Uint32 deltaMs) {
 
 void PlayState::processNetworkMove(GameEngine& engine) {
     NetworkMove enemyMove;
-    if (Network::receiveMove(enemyMove)) {
+    
+    // DIP: Using the injected Network interface!
+    if (engine.getNetwork().receiveMove(enemyMove)) {
         GameState& data = engine.getGameData();
-        Audio& audio = engine.getAudio();
+        IAudio& audio = engine.getAudio();
 
         audio.playSound(engine.getContext().sfxPlaceTile);
         data.grid[enemyMove.x][enemyMove.y] = enemyMove.letter;
@@ -116,17 +119,15 @@ void PlayState::processNetworkMove(GameEngine& engine) {
 }
 
 void PlayState::render(GameEngine& engine) {
-    Renderer& renderer = engine.getRenderer();
+    IRenderer& renderer = engine.getRenderer();
     AppContext& ctx = engine.getContext();
     GameState& data = engine.getGameData();
 
-    // Time and Turns
     char timerText[32];
-    Uint32 remaining = GAME_DURATION_MS - (SDL_GetTicks() - data.gameStartTime);
+    Uint32 remaining = GAME_DURATION_MS > (SDL_GetTicks() - data.gameStartTime) ? GAME_DURATION_MS - (SDL_GetTicks() - data.gameStartTime) : 0;
     snprintf(timerText, sizeof(timerText), "Time: %02d:%02d", (remaining / 1000) / 60, (remaining / 1000) % 60);
     renderer.drawText(ctx.fontRegular, timerText, WINDOW_WIDTH - 150, 10, {100, 50, 150, 255});
 
-    // Grid rendering
     for (int i = 0; i <= GRID_SIZE; ++i) {
         renderer.drawLine(i * TILE_SIZE, 0, i * TILE_SIZE, WINDOW_HEIGHT, {160, 130, 200, 255});
         renderer.drawLine(0, i * TILE_SIZE, WINDOW_WIDTH, i * TILE_SIZE, {160, 130, 200, 255});
@@ -142,7 +143,6 @@ void PlayState::render(GameEngine& engine) {
         }
     }
 
-    // Selected Tile Indicator
     if (data.isTileSelected) {
         SDL_Rect rect = { data.selectedX * TILE_SIZE, data.selectedY * TILE_SIZE, TILE_SIZE, TILE_SIZE };
         renderer.drawRect(rect, {150, 150, 150, 100}, true);
@@ -152,10 +152,9 @@ void PlayState::render(GameEngine& engine) {
         }
     }
 
-    // Score UI
     char scoreText[256];
     snprintf(scoreText, sizeof(scoreText), "P1: %d | P2: %d", data.scores[0], data.scores[1]);
     renderer.drawText(ctx.fontRegular, scoreText, 10, WINDOW_HEIGHT - 40, {0, 0, 0, 255});
 
-    renderer.drawButton(data.giveUpButton);
+    giveUpBtn->render(renderer);
 }
