@@ -31,22 +31,7 @@ void Renderer::drawTextCentered(TTF_Font* font, const std::string& text, int y, 
     drawText(font, text, x, y, color);
 }
 
-void Renderer::drawButton(const Button& button) {
-    SDL_Color btnColor = {100, 50, 150, 255};
-    SDL_Color hoverColor = {160, 130, 200, 255};
-    SDL_Color textColor = {255, 255, 255, 255};
-    SDL_Color use = button.isHovered ? hoverColor : btnColor;
-    
-    drawRect(button.rect, use, true);
 
-    int textW = 0, textH = 0;
-    if (app.fontRegular && !button.text.empty()) {
-        TTF_SizeText(app.fontRegular, button.text.c_str(), &textW, &textH);
-    }
-    int textX = button.rect.x + (button.rect.w - textW) / 2;
-    int textY = button.rect.y + (button.rect.h - textH) / 2;
-    drawText(app.fontRegular, button.text, textX, textY, textColor);
-}
 
 void Renderer::drawRect(const SDL_Rect& rect, SDL_Color color, bool fill) {
     SDL_SetRenderDrawColor(app.renderer, color.r, color.g, color.b, color.a);

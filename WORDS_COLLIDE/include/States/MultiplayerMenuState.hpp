@@ -1,5 +1,5 @@
-#ifndef SPLASH_STATE_HPP
-#define SPLASH_STATE_HPP
+#ifndef MULTIPLAYER_MENU_STATE_HPP
+#define MULTIPLAYER_MENU_STATE_HPP
 
 #include "Core/IGameState.hpp"
 #include "UI/Button.hpp"
@@ -7,7 +7,7 @@
 #include <vector>
 #include <memory>
 
-class SplashState : public IGameState {
+class MultiplayerMenuState : public IGameState {
 public:
     void onEnter(GameEngine& engine) override;
     void handleInput(GameEngine& engine, const SDL_Event& event) override;
@@ -15,10 +15,10 @@ public:
     void render(GameEngine& engine) override;
 
 private:
-    // LSP in action: We can store pointers to the Interfaces!
     std::vector<std::shared_ptr<IDrawable>> drawables;
-    std::shared_ptr<Button> startBtn;
-    std::shared_ptr<Button> multiBtn;
+    std::shared_ptr<Button> hostBtn;
+    std::shared_ptr<Button> joinBtn;
+    std::shared_ptr<Button> backBtn;
 };
 
-#endif // SPLASH_STATE_HPP
+#endif // MULTIPLAYER_MENU_STATE_HPP

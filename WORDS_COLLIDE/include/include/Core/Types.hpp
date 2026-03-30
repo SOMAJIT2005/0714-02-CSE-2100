@@ -19,11 +19,6 @@ enum class GameStateType {
     QUIT
 };
 
-struct Button {
-    SDL_Rect rect{};
-    std::string text;
-    bool isHovered = false;
-};
 
 // Represents the pure data of the game, completely decoupled from rendering or logic
 struct GameState {
@@ -43,14 +38,6 @@ struct GameState {
     std::array<int, 2> scores{0, 0};
     std::array<std::string, MAX_SCORED_WORDS> scoredWords{};
     int scoredWordCount = 0;
-
-    Button startGameButton;
-    Button multiplayerButton;
-    Button hostGameButton;
-    Button joinGameButton;
-    Button backButton;
-    Button giveUpButton;
-    Button playAgainButton;
 };
 
 // Holds the raw SDL pointers for the subsystems to share
