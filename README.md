@@ -424,6 +424,6 @@ This project is for educational and portfolio purposes.
 
 *Developed by:
 Somajit Deb
-||Student ID: 240238
-||Arrono Paul Turjo
-||Student ID: 240206*
+|| Student ID: 240238
+|| Arrono Paul Turjo
+|| Student ID: 240206*
