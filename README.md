@@ -422,4 +422,8 @@ This project is for educational and portfolio purposes.
 
 ---
 
-*Built with ❤️ using C++17 and SDL2.*
+*Developed by:
+Somajit Deb
+Student ID: 240238
+Arrono Paul Turjo
+Student ID: 240206*
