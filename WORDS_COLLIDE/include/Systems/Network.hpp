@@ -1,7 +1,7 @@
 #ifndef NETWORK_HPP
 #define NETWORK_HPP
 
-#include "Types.hpp"
+#include "Core/Types.hpp"
 #include <SDL2/SDL_net.h>
 
 struct NetworkMove {

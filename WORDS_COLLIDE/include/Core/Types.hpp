@@ -6,7 +6,7 @@
 #include <SDL2/SDL_mixer.h>
 #include <array>
 #include <string>
-#include "Config.hpp"
+#include "Core/Config.hpp"
 
 enum class GameStateType {
     SPLASH,
@@ -25,6 +25,7 @@ struct Button {
     bool isHovered = false;
 };
 
+// Represents the pure data of the game, completely decoupled from rendering or logic
 struct GameState {
     GameStateType currentState = GameStateType::SPLASH;
     std::array<std::string, 2> playerNames{};
@@ -52,6 +53,7 @@ struct GameState {
     Button playAgainButton;
 };
 
+// Holds the raw SDL pointers for the subsystems to share
 struct AppContext {
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;

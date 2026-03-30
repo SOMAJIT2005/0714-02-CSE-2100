@@ -1,4 +1,4 @@
-#include "Audio.hpp"
+#include "Systems/Audio.hpp"
 #include <SDL2/SDL_mixer.h>
 #include <iostream>
 
@@ -21,18 +21,19 @@ bool Audio::init() {
 }
 
 void Audio::playSound(Mix_Chunk* sound) {
-    if (sound) Mix_PlayChannel(-1, sound, 0);
+    if (sound && initialized) Mix_PlayChannel(-1, sound, 0);
 }
 
 void Audio::playMusic(Mix_Music* music) {
-    if (music) Mix_PlayMusic(music, -1);
+    if (music && initialized) Mix_PlayMusic(music, -1);
 }
 
 void Audio::stopMusic() {
-    Mix_HaltMusic();
+    if (initialized) Mix_HaltMusic();
 }
 
 Audio::~Audio() {
+    if (!initialized) return;
     if (app.sfxPlaceTile) Mix_FreeChunk(app.sfxPlaceTile);
     if (app.sfxValidWord) Mix_FreeChunk(app.sfxValidWord);
     if (app.sfxWarning)   Mix_FreeChunk(app.sfxWarning);

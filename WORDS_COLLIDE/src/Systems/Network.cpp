@@ -1,4 +1,4 @@
-#include "Network.hpp"
+#include "Systems/Network.hpp"
 #include <iostream>
 
 static TCPsocket s_socket = nullptr;
@@ -20,10 +20,13 @@ bool Network::hostGame(int port) {
     TCPsocket server = SDLNet_TCP_Open(&ip);
     if (!server) return false;
     std::cout << "Hosting on port " << port << ". Waiting for Player 2...\n";
+    
+    // Blocking wait for connection
     while (!s_socket) {
         s_socket = SDLNet_TCP_Accept(server);
         SDL_Delay(100);
     }
+    
     SDLNet_TCP_AddSocket(s_socketSet, s_socket);
     s_isConnected = true;
     std::cout << "Player 2 Connected!\n";
@@ -34,8 +37,10 @@ bool Network::joinGame(const char* ipAddress, int port) {
     IPaddress ip;
     std::cout << "Connecting to " << ipAddress << ":" << port << "...\n";
     if (SDLNet_ResolveHost(&ip, ipAddress, port) == -1) return false;
+    
     s_socket = SDLNet_TCP_Open(&ip);
     if (!s_socket) return false;
+    
     SDLNet_TCP_AddSocket(s_socketSet, s_socket);
     s_isConnected = true;
     std::cout << "Connected to Host successfully!\n";
@@ -64,4 +69,5 @@ void Network::cleanup() {
     if (s_socket) SDLNet_TCP_Close(s_socket);
     if (s_socketSet) SDLNet_FreeSocketSet(s_socketSet);
     SDLNet_Quit();
+    s_isConnected = false;
 }

@@ -1,7 +1,7 @@
 #ifndef AUDIO_HPP
 #define AUDIO_HPP
 
-#include "Types.hpp"
+#include "Core/Types.hpp"
 
 class Audio {
 public:
