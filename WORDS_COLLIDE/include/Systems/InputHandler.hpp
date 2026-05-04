@@ -2,6 +2,7 @@
 #define INPUT_HANDLER_HPP
 
 #include "Core/Types.hpp"
+#include "UI/Button.hpp"
 
 class InputHandler {
 public:

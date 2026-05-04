@@ -1,17 +1,23 @@
 #ifndef NETWORK_HPP
 #define NETWORK_HPP
 
-#include "Systems/INetwork.hpp"
+#include "Systems/Network.hpp"
 #include <SDL2/SDL_net.h>
 
-class Network : public INetwork {
+struct NetworkMove {
+    int x;
+    int y;
+    char letter;
+};
+
+class Network  {
 public:
-    bool init() override;
-    bool hostGame(int port) override;
-    bool joinGame(const char* ipAddress, int port) override;
-    bool sendMove(int x, int y, char letter) override;
-    bool receiveMove(NetworkMove& outMove) override;
-    void cleanup() override;
+    bool init();
+    bool hostGame(int port);
+    bool joinGame(const char* ipAddress, int port);
+    bool sendMove(int x, int y, char letter);
+    bool receiveMove(NetworkMove& outMove);
+    void cleanup();
 private:
     TCPsocket m_socket = nullptr;
     SDLNet_SocketSet m_socketSet = nullptr;

@@ -8,13 +8,10 @@
 void IPInputState::handleInput(GameEngine& engine, const SDL_Event& event) {
     GameState& data = engine.getGameData();
 
-    // Re-instantiate button locally or assume it's stored in the class like Phase 3/4.
-    // For simplicity, here is the raw backspace/enter logic.
     if (InputHandler::isBackspace(event)) {
         if (!data.targetIP.empty()) data.targetIP.pop_back();
     } else if (InputHandler::isEnter(event)) {
         if (!data.targetIP.empty()) {
-            // DIP: Using the injected Network interface!
             if (engine.getNetwork().joinGame(data.targetIP.c_str(), 8080)) {
                 engine.changeState(std::make_unique<NameInputState>());
             } else {
@@ -34,7 +31,7 @@ void IPInputState::handleInput(GameEngine& engine, const SDL_Event& event) {
 void IPInputState::update(GameEngine& engine, Uint32 deltaMs) {}
 
 void IPInputState::render(GameEngine& engine) {
-    IRenderer& renderer = engine.getRenderer();
+    Renderer& renderer = engine.getRenderer();
     AppContext& ctx = engine.getContext();
     GameState& data = engine.getGameData();
 

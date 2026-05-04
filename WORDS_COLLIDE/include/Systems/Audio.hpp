@@ -2,17 +2,17 @@
 #define AUDIO_HPP
 
 #include "Core/Types.hpp"
-#include "Systems/IAudio.hpp"
+#include "Systems/Audio.hpp"
 
-class Audio : public IAudio {
+class Audio {
 public:
     explicit Audio(AppContext& ctx);
-    ~Audio() override;
+    ~Audio();
 
-    bool init() override;
-    void playSound(Mix_Chunk* sound) override;
-    void playMusic(Mix_Music* music) override;
-    void stopMusic() override;
+    bool init();
+    void playSound(Mix_Chunk* sound);
+    void playMusic(Mix_Music* music);
+    void stopMusic();
 
 private:
     AppContext& app;
