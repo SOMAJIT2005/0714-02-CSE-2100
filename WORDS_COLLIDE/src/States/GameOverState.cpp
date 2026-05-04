@@ -4,11 +4,13 @@
 #include "Systems/InputHandler.hpp"
 
 void GameOverState::handleInput(GameEngine& engine, const SDL_Event& event) {
-    // The new Button class handles hover states and clicks automatically!
-    if (playAgainBtn && playAgainBtn->handleInput(event)) {
-        // If clicked, restart the game (assuming you have a PlayState transition here)
-        engine.getAudio().playSound(engine.getContext().sfxValidWord); // Optional sound
-        // engine.changeState(std::make_unique<PlayState>()); // Uncomment or adapt to your logic
+    GameState& data = engine.getGameData();
+
+    data.playAgainButton.isHovered = InputHandler::isMouseOverButton(event, data.playAgainButton);
+
+    if (InputHandler::isMouseClickOnButton(event, data.playAgainButton)) {
+        // Reset necessary game data here if needed, then back to menu
+        engine.changeState(std::make_unique<SplashState>());
     }
 }
 
@@ -28,16 +30,5 @@ void GameOverState::render(GameEngine& engine) {
     renderer.drawTextCentered(ctx.fontRegular, p1Score, 250, {0, 0, 0, 255});
     renderer.drawTextCentered(ctx.fontRegular, p2Score, 300, {0, 0, 0, 255});
 
-    if (playAgainBtn) {
-        playAgainBtn->render(engine.getRenderer());
-    }
-}
-
-void GameOverState::onEnter(GameEngine& engine) {
-    // Create the button (adjust the X and Y coordinates as needed for your screen size)
-    playAgainBtn = std::make_shared<Button>(
-        SDL_Rect{WINDOW_WIDTH / 2 - 75, WINDOW_HEIGHT / 2 + 50, 150, 40}, 
-        "Play Again", 
-        engine.getContext().fontRegular
-    );
+    renderer.drawButton(data.playAgainButton);
 }

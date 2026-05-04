@@ -9,13 +9,13 @@
 
 class Button : public IDrawable, public IInteractable {
 public:
-    SDL_Rect rect;
     Button(SDL_Rect rect, const std::string& text, TTF_Font* font);
 
     bool handleInput(const SDL_Event& event) override;
     void render(Renderer& renderer) const override;
 
 private:
+    SDL_Rect rect;
     std::string text;
     TTF_Font* font;
     bool isHovered;

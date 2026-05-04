@@ -22,6 +22,7 @@ void MultiplayerMenuState::onEnter(GameEngine& engine) {
 
 void MultiplayerMenuState::handleInput(GameEngine& engine, const SDL_Event& event) {
     if (hostBtn->handleInput(event)) {
+        // DIP: Using the injected Network interface!
         if (engine.getNetwork().hostGame(8080)) {
             SDL_StartTextInput();
             engine.changeState(std::make_unique<NameInputState>());
@@ -38,8 +39,5 @@ void MultiplayerMenuState::handleInput(GameEngine& engine, const SDL_Event& even
 void MultiplayerMenuState::update(GameEngine& engine, Uint32 deltaMs) {}
 
 void MultiplayerMenuState::render(GameEngine& engine) {
-    Renderer& renderer = engine.getRenderer();
-    for (const auto& item : drawables) {
-        item->render(renderer);
-    }
+    for (const auto& item : drawables) item->render(engine.getRenderer());
 }

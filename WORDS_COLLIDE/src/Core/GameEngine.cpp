@@ -2,9 +2,9 @@
 #include "States/SplashState.hpp"
 
 GameEngine::GameEngine(AppContext context, 
-                       std::unique_ptr<Audio> audioSystem,
-                       std::unique_ptr<Renderer> renderSystem,
-                       std::unique_ptr<Network> networkSystem,
+                       std::unique_ptr<IAudio> audioSystem,
+                       std::unique_ptr<IRenderer> renderSystem,
+                       std::unique_ptr<INetwork> networkSystem,
                        std::unique_ptr<IBoardScorer> scorerSystem)
     : app(context),
       audio(std::move(audioSystem)), 
