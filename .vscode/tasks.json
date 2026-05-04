@@ -21,7 +21,8 @@
                 "-lSDL2",
                 "-lSDL2_ttf",
                 "-lSDL2_mixer",
-                "-lSDL2_net"
+                "-lSDL2_net",
+                "-lws2_32"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"

@@ -12,8 +12,13 @@
 #define WARNING_TIME_MS 50000      
 #define WARNING_INTERVAL_MS 10000  
 #define TURN_DURATION_MS 20000    
+#define BLITZ_TURN_DURATION_MS 7000 
 #define BONUS_WORD_POINTS 15       
 #define MAX_BONUS_WORDS 50         
 #define MAX_WORDS_IN_DICT 200000 
+
+// Mystery Word Specific
+#define MYSTERY_ROWS 6
+#define MYSTERY_COLS 5
 
 #endif // CONFIG_H
